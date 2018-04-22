@@ -1,0 +1,1 @@
+*/30 * * * * python3 ~/tmd/main.py >> ~/tmd/log.txt
