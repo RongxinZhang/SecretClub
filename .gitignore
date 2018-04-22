@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .DS_Store
-.news_scrapper
+news_scrapper/*
+html/*
 
 # C extensions
 *.so
