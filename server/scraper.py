@@ -21,7 +21,7 @@ def getAllLinks(total_pages):
     links = []
     titles = []
     # for i in range(1, int(total_pages)):
-    total_pages = min(total_pages, 3)
+    # total_pages = min(total_pages, 3)
     print("Looking through {} pages".format(total_pages))
 
     for i in range(1, int(total_pages)):
@@ -48,6 +48,6 @@ def download_save_pages(links, titles):
     for i, url in enumerate(links):
         page = requests.get(url)
         soup = BeautifulSoup(page.content, "html.parser")
-        f = open("html/"+ titles[i] + ".html", "w+")
+        f = open("/home/ubuntu/tmd/html/"+ titles[i] + ".html", "w+")
         f.write(str(soup))
         f.close()
