@@ -28,6 +28,7 @@ def send_telegram_message(msg):
 def upload_to_ipfs(link, title):
     res = IPFS_API.add('/home/ubuntu/tmd/html/{}.html'.format(title))
     hash = res['Hash']
+    IPFS_API.pin_add(hash)
 
     store_to_redis(link, (title, hash))
 
