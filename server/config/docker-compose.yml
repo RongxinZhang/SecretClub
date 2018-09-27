@@ -1,0 +1,32 @@
+version: '3.2'
+
+services:
+  redis:
+    image: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ./data:/data
+    expose:
+      - "6379"
+
+  ipfs:
+    image: jbenet/go-ipfs
+    ports:
+    - "4001:4001"
+    - "5001:5001"
+    - "8081:8080"
+    volumes:
+    - .ipfs-docker-data:/data/ipfs/
+    - .ipfs-docker-staging:/export
+
+  main:
+    build:
+      context: ../
+      dockerfile: ./config/Dockerfile
+    environment:
+      - TELEGRAM_BOT_TOKEN
+      - TELEGRAM_SECRET_CLUB_CHAT_ID
+    depends_on:
+      - redis
+      - ipfs
+    command: ["tail", "-f", "/secret-club/runs.log"]
