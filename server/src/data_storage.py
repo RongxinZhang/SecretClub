@@ -2,17 +2,16 @@ from abc import ABC, abstractmethod
 from typing import List
 
 import redis
-import requests
 
 from article import Article
 
 PREV_NUM_PAGES_CHECKED_KEY = 'PREV_NUM_PAGES_CHECKED'
 
 
-class StorageProvider(ABC):
-    """Abstract class representing a storage provider (not to be confused with `BackupProvider`)
+class DataStorageProvider(ABC):
+    """Abstract class representing a data storage provider
 
-    A storage provider handles tracking all the found articles.
+    A data storage provider handles tracking all the found articles.
     This can be extended to support any data store such as a MySQL, MongoDB, Firestore, etc.
 
     Attributes:
@@ -67,6 +66,7 @@ class StorageProvider(ABC):
         The headline, original link, and backup link all need to be stored. The structure is data store dependent.
             An RDS might store this in an Article table with columns for each property
             A NoSQL data store might store this as a JSON object
+            etc.
 
         Args:
             article (Article): Article to store
@@ -92,7 +92,7 @@ class StorageProvider(ABC):
         pass
 
 
-class RedisProvider(StorageProvider):
+class RedisProvider(DataStorageProvider):
     def __init__(self, **kwargs):
         self.host = kwargs.get('host')
         self.port = kwargs.get('port')

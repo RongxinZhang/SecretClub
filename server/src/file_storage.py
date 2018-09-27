@@ -4,10 +4,10 @@ import ipfsapi
 from article import Article
 
 
-class BackupProvider(ABC):
-    """Abstract class representing a backup provider (not to be confused with `StorageProvider`)
+class FileStorageProvider(ABC):
+    """Abstract class representing a file storage provider
 
-    A backup provider handles storage and hosting of article backups.
+    A file storage provider handles storage and hosting of article backups.
     This can be extended to support any provider such as s3, Dropbox, etc. as long as it satisfies the following requirements:
         1) Must be censorship resistant and not contain any backdoors
         2) Must hold files indefinitely
@@ -35,7 +35,7 @@ class BackupProvider(ABC):
         pass
 
 
-class IpfsProvider(BackupProvider):
+class IpfsProvider(FileStorageProvider):
     """Default backup provider
 
     This uses IPFS to store backups of articles.

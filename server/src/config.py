@@ -2,14 +2,13 @@
 
 import os
 
-from backup import IpfsProvider
+from data_storage import RedisProvider
 from distributor import TelegramProvider
+from file_storage import IpfsProvider
 from scraper import SixthToneScraper
-from storage import RedisProvider
 
-
-BACKUP_PROVIDER = IpfsProvider
-BACKUP_CONFIG = {
+FILE_STORAGE_PROVIDER = IpfsProvider
+FILE_STORAGE_CONFIG = {
     'host': 'ipfs',
     'port': 5001
 }
@@ -23,8 +22,8 @@ DISTRIBUTION_CONFIG = {
 SCRAPER = SixthToneScraper
 SCRAPER_CONFIG = {}
 
-STORAGE_PROVIDER = RedisProvider
-STORAGE_CONFIG = {
+DATA_STORAGE_PROVIDER = RedisProvider
+DATA_STORAGE_CONFIG = {
     'host': 'redis',
     'port': 6379,
     'db': 0

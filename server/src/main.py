@@ -3,16 +3,17 @@ from datetime import datetime
 
 import requests
 
-from backup import BackupProvider
 from config import *
+from data_storage import DataStorageProvider
 from distributor import DistributionProvider
+from file_storage import FileStorageProvider
 from scraper import Scraper
-from storage import StorageProvider
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 
+# TODO: output log should be passed in as a command line parameter
 fh = logging.FileHandler(
     os.path.realpath('{}/../../runs.log'.format(os.path.realpath(__file__)))
 )
@@ -28,16 +29,16 @@ logger.addHandler(ch)
 
 
 def main(
-        backup_provider: BackupProvider,
+        file_storage_provider: FileStorageProvider,
         dist_provider: DistributionProvider,
         site_scraper: Scraper,
-        storage_provider: StorageProvider
+        data_storage_provider: DataStorageProvider
 ):
     logger.info('-' * 100)
     logger.info('Run at {}\n'.format(datetime.now()))
 
     logger.info('Retrieving articles...')
-    prev_num_pages_checked = storage_provider.get_prev_num_pages_checked()
+    prev_num_pages_checked = data_storage_provider.get_prev_num_pages_checked()
     total_pages = site_scraper.get_num_pages()
     # An example to clarify the following line:
     #
@@ -51,7 +52,7 @@ def main(
 
     logger.info('Checking for new articles...')
     new_articles = list(filter(
-        lambda a: not storage_provider.exists(a.orig_link),
+        lambda a: not data_storage_provider.exists(a.orig_link),
         site_scraper.articles
     ))
 
@@ -61,14 +62,14 @@ def main(
     # TODO: these can be done in parallel asynchronously
     for article in new_articles:
         article.download()
-        backup_provider.backup_article(article)
-        storage_provider.save_article(article)
+        file_storage_provider.backup_article(article)
+        data_storage_provider.save_article(article)
         article.dispose()
-    storage_provider.set_num_pages_checked(total_pages)
+    data_storage_provider.set_num_pages_checked(total_pages)
 
     # TODO: this should be done before storing the new articles since there's no need to check the articles just added.
     logger.info('Searching for deleted articles and sharing them...')
-    all_articles = storage_provider.get_all_articles()
+    all_articles = data_storage_provider.get_all_articles()
 
     # TODO: these can be done in parallel asynchronously
     for article in all_articles:
@@ -82,15 +83,15 @@ def main(
 
             success = dist_provider.share_article(article)
             if success:
-                storage_provider.delete_article(article)
+                data_storage_provider.delete_article(article)
 
     logger.info('Done\n\n')
 
 
 if __name__ == '__main__':
-    backup = BACKUP_PROVIDER(**BACKUP_CONFIG)
+    file_storage = FILE_STORAGE_PROVIDER(**FILE_STORAGE_CONFIG)
     distribution = DISTRIBUTION_PROVIDER(**DISTRIBUTION_CONFIG)
     scraper = SCRAPER(**SCRAPER_CONFIG)
-    storage = STORAGE_PROVIDER(**STORAGE_CONFIG)
+    data_storage = DATA_STORAGE_PROVIDER(**DATA_STORAGE_CONFIG)
 
-    main(backup, distribution, scraper, storage)
+    main(file_storage, distribution, scraper, data_storage)
