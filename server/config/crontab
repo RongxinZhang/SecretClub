@@ -1,1 +1,1 @@
-*/30 * * * * python3 ~/tmd/main.py >> ~/tmd/log.txt
+*/30 * * * * python /secret-club/src/main.py
