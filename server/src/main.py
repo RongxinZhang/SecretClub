@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 
+import requests
+
 from backup import BackupProvider
 from config import *
 from distributor import DistributionProvider
@@ -37,6 +39,14 @@ def main(
     logger.info('Retrieving articles...')
     prev_num_pages_checked = storage_provider.get_prev_num_pages_checked()
     total_pages = site_scraper.get_num_pages()
+    # An example to clarify the following line:
+    #
+    # Let's say that at 12pm we scan the site for the first time and find 14 pages.
+    # We want to scrape pages 1-14 (the latest 14 pages).
+    # Since this is the first time, prev_num_pages_checked == 0. So we are scanning 14 - max(0, 1) + 1 = 14 pages.
+    # Now let's say at 4pm we scan it again and we find 15 pages.
+    # Now we want to scrape pages 14-15 (the latest 2 pages) since page 14 may not have been full last time we checked.
+    # So prev_num_pages_checked == 14 and we are scanning 15 - max(14, 1) + 1 = 2 pages
     site_scraper.load_articles(total_pages - max(prev_num_pages_checked, 1) + 1)
 
     logger.info('Checking for new articles...')
@@ -48,7 +58,7 @@ def main(
     logger.info('Found {} new articles\n'.format(len(new_articles)))
 
     logger.info('Downloading and backing up new articles...')
-    # TODO: these should be done in parallel asynchronously
+    # TODO: these can be done in parallel asynchronously
     for article in new_articles:
         article.download()
         backup_provider.backup_article(article)
@@ -56,15 +66,23 @@ def main(
         article.dispose()
     storage_provider.set_num_pages_checked(total_pages)
 
-    logger.info('Searching for deleted articles...')
-    deleted_articles = storage_provider.get_deleted_articles()
+    # TODO: this should be done before storing the new articles since there's no need to check the articles just added.
+    logger.info('Searching for deleted articles and sharing them...')
+    all_articles = storage_provider.get_all_articles()
 
-    logger.info('Found {} deleted articles\n'.format(len(deleted_articles)))
+    # TODO: these can be done in parallel asynchronously
+    for article in all_articles:
+        r = requests.head(article.orig_link)
+        if r.status_code == 404:
+            logger.info('{} was deleted. Sharing with group.\n\tOriginal link: {}\n\tBackup link: {}'.format(
+                article.title,
+                article.orig_link,
+                article.backup_link
+            ))
 
-    if deleted_articles:
-        logger.info('Sharing deleted articles and clearing them from storage...')
-        for article in deleted_articles:
-            dist_provider.share_article(article)
+            success = dist_provider.share_article(article)
+            if success:
+                storage_provider.delete_article(article)
 
     logger.info('Done\n\n')
 

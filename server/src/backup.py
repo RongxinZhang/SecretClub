@@ -5,20 +5,47 @@ from article import Article
 
 
 class BackupProvider(ABC):
+    """Abstract class representing a backup provider (not to be confused with `StorageProvider`)
+
+    A backup provider handles storage and hosting of article backups.
+    This can be extended to support any provider such as s3, Dropbox, etc. as long as it satisfies the following requirements:
+        1) Must be censorship resistant and not contain any backdoors
+        2) Must hold files indefinitely
+        3) Ideally should not be censored in target countries (although this is permissible if it can be accessed via VPN)
+
+    Attributes:
+        __client (any): Reference to the provider's client object
+    """
     def __init__(self, **kwargs):
         self.__client = None  # initialize method should set this
-        self.initialize()
+        self._initialize()
 
     @abstractmethod
-    def initialize(self):
+    def _initialize(self):
+        """Handle initialization of the provider's client object and any other necessary initialization"""
         pass
 
     @abstractmethod
     def backup_article(self, article: Article):
+        """Back up [article] and update it with the [backup_link]
+
+        Args:
+            article (Article): The article to backup
+        """
         pass
 
 
 class IpfsProvider(BackupProvider):
+    """Default backup provider
+
+    This uses IPFS to store backups of articles.
+    IPFS is a p2p encrypted and distributed storage solution. Check out https://ipfs.io for more info.
+
+    Attributes:
+        host (str): The host on which the IPFS server is running
+        port (int): The port on which the IPFS server's local API is running
+        __client (ipfsapi): ipfsapi instance
+    """
     def __init__(self, **kwargs):
         self.host = kwargs.get('host')
         self.port = kwargs.get('port')
@@ -28,7 +55,7 @@ class IpfsProvider(BackupProvider):
 
         super().__init__()
 
-    def initialize(self):
+    def _initialize(self):
         self.__client = ipfsapi.connect(self.host, self.port)
 
     def backup_article(self, article: Article):

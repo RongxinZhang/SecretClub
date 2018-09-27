@@ -1,3 +1,5 @@
+"""Configuration file defining which providers to use and their configuration details"""
+
 import os
 
 from backup import IpfsProvider
